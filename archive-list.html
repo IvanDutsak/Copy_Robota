@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Повний архів - Статистика роботи склад-магазин</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 25%, #1e40af 50%, #1e3a8a 75%, #1e1b4b 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-effect:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .archive-item {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .archive-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.2), transparent);
+            transition: left 0.3s;
+        }
+        
+        .archive-item:hover::before {
+            left: 100%;
+        }
+        
+        .archive-item:hover {
+            transform: translateX(10px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .header-glow {
+            text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            animation: headerPulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes headerPulse {
+            0%, 100% { text-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+            50% { text-shadow: 0 0 30px rgba(59, 130, 246, 0.8), 0 0 40px rgba(139, 92, 246, 0.3); }
+        }
+        
+        .number-truncate {
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            max-width: 100%;
+            display: block;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .year-group {
+            border-left: 3px solid rgba(59, 130, 246, 0.5);
+            margin-left: 1rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .year-group::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -8px;
+            width: 13px;
+            height: 13px;
+            background: #3b82f6;
+            border-radius: 50%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        <!-- Header -->
+        <div class="text-center mb-6 sm:mb-8 fade-in">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 sm:mb-3 header-glow">
+                <i class="fas fa-archive mr-2 sm:mr-3"></i>
+                Повний архів місяців
+            </h1>
+            <p class="text-blue-200 text-sm sm:text-base md:text-lg">Перегляд всіх збережених архівів за весь час</p>
+            
+            <button id="back-btn" class="mt-3 sm:mt-4 btn-primary text-white font-bold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl text-base sm:text-lg relative overflow-hidden">
+                <i class="fas fa-arrow-left mr-1.5 sm:mr-2"></i>
+                Повернутись на головну
+            </button>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="glass-effect rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 fade-in">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
+                <div class="flex-grow">
+                    <div class="relative">
+                        <input type="text" id="search-archive" placeholder="Пошук за назвою..." 
+                            class="w-full bg-white bg-opacity-10 text-white rounded-md sm:rounded-lg pl-8 sm:pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base">
+                        <i class="fas fa-search absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-blue-300 text-xs sm:text-sm"></i>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                    <select id="sort-archives" class="bg-white bg-opacity-10 text-white rounded-md sm:rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base w-full sm:w-auto">
+                        <option value="date-desc">За датою (нові спочатку)</option>
+                        <option value="date-asc">За датою (старі спочатку)</option>
+                        <option value="total-desc">За сумою (більші спочатку)</option>
+                        <option value="total-asc">За сумою (менші спочатку)</option>
+                    </select>
+                    
+                    <select id="filter-year" class="bg-white bg-opacity-10 text-white rounded-md sm:rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base w-full sm:w-auto">
+                        <option value="all">Всі роки</option>
+                        <!-- Роки будуть додані через JavaScript -->
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Archives List -->
+        <div class="glass-effect rounded-xl sm:rounded-2xl p-4 sm:p-6 fade-in">
+            <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-4 sm:mb-6">
+                <i class="fas fa-calendar-alt mr-2 sm:mr-3 text-blue-400"></i>
+                Архіви за місяцями
+            </h2>
+            
+            <div id="archives-container" class="space-y-4 sm:space-y-6">
+                <!-- Тут будуть відображатися архіви, згруповані за роками -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ArchivesList {
+            constructor() {
+                this.archives = {};
+                this.years = new Set();
+                this.monthNames = ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'];
+                
+                this.initializeElements();
+                this.loadArchives();
+                this.bindEvents();
+            }
+            
+            initializeElements() {
+                this.archivesContainer = document.getElementById('archives-container');
+                this.searchInput = document.getElementById('search-archive');
+                this.sortSelect = document.getElementById('sort-archives');
+                this.filterYearSelect = document.getElementById('filter-year');
+                this.backButton = document.getElementById('back-btn');
+            }
+            
+            bindEvents() {
+                // Повернення на головну
+                this.backButton.addEventListener('click', () => {
+                    window.location.href = 'index.html';
+                });
+                
+                // Пошук архівів
+                this.searchInput.addEventListener('input', () => {
+                    this.filterArchives();
+                });
+                
+                // Сортування архівів
+                this.sortSelect.addEventListener('change', () => {
+                    this.displayArchives();
+                });
+                
+                // Фільтрація за роками
+                this.filterYearSelect.addEventListener('change', () => {
+                    this.filterArchives();
+                });
+            }
+            
+            loadArchives() {
+                try {
+                    // Отримуємо архіви з localStorage
+                    const archivesData = localStorage.getItem('monthlyArchives');
+                    if (archivesData) {
+                        this.archives = JSON.parse(archivesData);
+                        console.log("Завантажено архівів:", Object.keys(this.archives).length);
+                        
+                        // Збираємо унікальні роки для фільтра
+                        Object.keys(this.archives).forEach(key => {
+                            const year = key.split('-')[0];
+                            if (year) {
+                                this.years.add(year);
+                            }
+                        });
+                        
+                        // Додаємо роки в селект фільтра
+                        this.populateYearFilter();
+                        
+                        // Відображаємо архіви
+                        this.displayArchives();
+                    } else {
+                        this.showNoArchivesMessage();
+                    }
+                } catch (error) {
+                    console.error("Помилка при завантаженні архівів:", error);
+                    this.showNoArchivesMessage();
+                }
+            }
+            
+            populateYearFilter() {
+                // Очищаємо селект (залишаємо тільки "Всі роки")
+                while (this.filterYearSelect.options.length > 1) {
+                    this.filterYearSelect.remove(1);
+                }
+                
+                // Додаємо роки в селект
+                const sortedYears = Array.from(this.years).sort().reverse();
+                sortedYears.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    this.filterYearSelect.appendChild(option);
+                });
+            }
+            
+            displayArchives() {
+                // Очищаємо контейнер
+                this.archivesContainer.innerHTML = '';
+                
+                // Перевіряємо, чи є архіви
+                if (Object.keys(this.archives).length === 0) {
+                    this.showNoArchivesMessage();
+                    return;
+                }
+                
+                // Групуємо архіви за роками
+                const archivesByYear = {};
+                
+                // Отримуємо список архівів і сортуємо їх
+                const archiveEntries = Object.entries(this.archives);
+                this.sortArchives(archiveEntries);
+                
+                // Групуємо за роками
+                archiveEntries.forEach(([key, archive]) => {
+                    // Визначаємо рік
+                    const year = key.split('-')[0];
+                    if (!year) return;
+                    
+                    if (!archivesByYear[year]) {
+                        archivesByYear[year] = [];
+                    }
+                    
+                    archivesByYear[year].push({ key, archive });
+                });
+                
+                // Відображаємо групи за роками (в порядку спадання)
+                const years = Object.keys(archivesByYear).sort().reverse();
+                years.forEach(year => {
+                    const yearGroup = document.createElement('div');
+                    yearGroup.className = 'year-group mb-8';
+                    yearGroup.dataset.year = year;
+                    
+                    const yearHeader = document.createElement('h3');
+                    yearHeader.className = 'text-2xl font-bold text-white mb-4';
+                    yearHeader.textContent = year;
+                    
+                    yearGroup.appendChild(yearHeader);
+                    
+                    // Додаємо архіви року
+                    const archivesContainer = document.createElement('div');
+                    archivesContainer.className = 'space-y-3';
+                    
+                    archivesByYear[year].forEach(({ key, archive }) => {
+                        const archiveItem = this.createArchiveItem(key, archive);
+                        archivesContainer.appendChild(archiveItem);
+                    });
+                    
+                    yearGroup.appendChild(archivesContainer);
+                    this.archivesContainer.appendChild(yearGroup);
+                });
+            }
+            
+            createArchiveItem(key, archive) {
+                const div = document.createElement('div');
+                div.className = 'archive-item bg-white bg-opacity-10 rounded-xl p-4 cursor-pointer transition-all duration-300 hover:bg-opacity-20';
+                div.dataset.key = key;
+                div.dataset.total = archive.total || 0;
+                
+                // Форматуємо великі числа для відображення
+                let formattedTotal = "0.00";
+                if (typeof archive.total !== 'undefined') {
+                    if (Math.abs(archive.total) > 999999) {
+                        formattedTotal = archive.total.toExponential(2);
+                    } else {
+                        formattedTotal = archive.total.toFixed(2);
+                    }
+                }
+                
+                // Визначаємо заголовок архіву
+                let archiveTitle = '';
+                let periodText = archive.period || '';
+                let daysCount = archive.daysCount || '0';
+                
+                if (archive.halfType && archive.monthName) {
+                    // Новий формат з половиною місяця
+                    archiveTitle = `${archive.halfType} ${archive.monthName}`;
+                } else {
+                    // Старий формат
+                    const [year, month] = key.split('-');
+                    if (year && month) {
+                        const monthIndex = parseInt(month) - 1;
+                        if (monthIndex >= 0 && monthIndex < 12) {
+                            archiveTitle = `${this.monthNames[monthIndex]} ${year}`;
+                        } else {
+                            archiveTitle = key;
+                        }
+                    } else {
+                        archiveTitle = key;
+                    }
+                }
+                
+                div.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="text-white font-bold text-lg flex items-center">
+                                <i class="fas fa-calendar-check mr-2 text-blue-400"></i>
+                                ${archiveTitle}
+                            </div>
+                            <div class="text-blue-300 text-sm mt-1">${periodText}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-green-400 font-bold text-xl">${formattedTotal}</div>
+                            <div class="text-blue-300 text-sm">${daysCount} днів</div>
+                        </div>
+                    </div>
+                `;
+                
+                div.addEventListener('click', () => {
+                    // Визначаємо параметри для переходу на сторінку деталей
+                    let original_month = key;
+                    if (key.includes('-first') || key.includes('-second')) {
+                        original_month = key.split('-').slice(0, 2).join('-');
+                    }
+                    
+                    window.location.href = `archive-detail.html?month=${original_month}&archive_key=${key}`;
+                });
+                
+                return div;
+            }
+            
+            sortArchives(archiveEntries) {
+                const sortOption = this.sortSelect.value;
+                
+                switch (sortOption) {
+                    case 'date-desc':
+                        // За датою (нові спочатку)
+                        archiveEntries.sort(([keyA], [keyB]) => keyB.localeCompare(keyA));
+                        break;
+                    case 'date-asc':
+                        // За датою (старі спочатку)
+                        archiveEntries.sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
+                        break;
+                    case 'total-desc':
+                        // За сумою (більші спочатку)
+                        archiveEntries.sort(([, archiveA], [, archiveB]) => 
+                            (archiveB.total || 0) - (archiveA.total || 0));
+                        break;
+                    case 'total-asc':
+                        // За сумою (менші спочатку)
+                        archiveEntries.sort(([, archiveA], [, archiveB]) => 
+                            (archiveA.total || 0) - (archiveB.total || 0));
+                        break;
+                }
+                
+                return archiveEntries;
+            }
+            
+            filterArchives() {
+                const searchText = this.searchInput.value.toLowerCase();
+                const selectedYear = this.filterYearSelect.value;
+                
+                // Фільтруємо групи за роками
+                const yearGroups = this.archivesContainer.querySelectorAll('.year-group');
+                yearGroups.forEach(group => {
+                    // Перевіряємо фільтр за роком
+                    if (selectedYear !== 'all' && group.dataset.year !== selectedYear) {
+                        group.style.display = 'none';
+                        return;
+                    } else {
+                        group.style.display = 'block';
+                    }
+                    
+                    // Фільтруємо архіви за текстом пошуку
+                    let visibleItems = 0;
+                    const archiveItems = group.querySelectorAll('.archive-item');
+                    
+                    archiveItems.forEach(item => {
+                        const text = item.textContent.toLowerCase();
+                        if (text.includes(searchText)) {
+                            item.style.display = 'block';
+                            visibleItems++;
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                    
+                    // Якщо всі архіви в групі приховані, приховуємо групу
+                    if (visibleItems === 0) {
+                        group.style.display = 'none';
+                    }
+                });
+                
+                // Перевіряємо, чи є видимі групи
+                const visibleGroups = Array.from(yearGroups).filter(group => 
+                    group.style.display !== 'none');
+                
+                if (visibleGroups.length === 0) {
+                    this.showNoResultsMessage();
+                }
+            }
+            
+            showNoArchivesMessage() {
+                this.archivesContainer.innerHTML = `
+                    <div class="text-center py-10">
+                        <i class="fas fa-folder-open text-blue-300 text-5xl mb-4"></i>
+                        <p class="text-blue-200 text-xl">Немає збережених архівів</p>
+                        <p class="text-blue-300 mt-2">Збережіть дані на головній сторінці, щоб вони з'явилися тут</p>
+                    </div>
+                `;
+            }
+            
+            showNoResultsMessage() {
+                if (!this.archivesContainer.querySelector('.no-results-message')) {
+                    const message = document.createElement('div');
+                    message.className = 'no-results-message text-center py-10';
+                    message.innerHTML = `
+                        <i class="fas fa-search text-blue-300 text-5xl mb-4"></i>
+                        <p class="text-blue-200 text-xl">Нічого не знайдено</p>
+                        <p class="text-blue-300 mt-2">Спробуйте змінити параметри пошуку</p>
+                    `;
+                    this.archivesContainer.appendChild(message);
+                }
+            }
+        }
+        
+        // Ініціалізуємо сторінку при завантаженні
+        document.addEventListener('DOMContentLoaded', () => {
+            new ArchivesList();
+        });
+    </script>
+</body>
+</html> 

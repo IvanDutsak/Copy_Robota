@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Деталі архіву - Статистика роботи склад-магазин</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Підключаємо jspdf для експорту PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 25%, #1e40af 50%, #1e3a8a 75%, #1e1b4b 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* Стилі для селекта сортування */
+        select {
+            background-color: rgba(255, 255, 255, 0.1);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1.5em 1.5em;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            padding-right: 2.5rem;
+            width: 100%;
+        }
+        
+        select option {
+            background-color: #2e3559;
+            color: white;
+            padding: 0.5rem;
+        }
+        
+        /* Темний фон для випадаючого списку */
+        select:focus {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: #8b5cf6;
+            outline: none;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-effect:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ef4444, #10b981);
+            background-size: 300% 100%;
+            animation: borderGlow 3s linear infinite;
+        }
+        
+        @keyframes borderGlow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 300% 50%; }
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+        }
+        
+        .day-card {
+            animation: fadeIn 0.5s ease-in;
+            animation-fill-mode: both;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .number-truncate {
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            max-width: 100%;
+            display: block;
+        }
+        
+        .header-glow {
+            text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            animation: headerPulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes headerPulse {
+            0%, 100% { text-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+            50% { text-shadow: 0 0 30px rgba(59, 130, 246, 0.8), 0 0 40px rgba(139, 92, 246, 0.3); }
+        }
+        
+        .chart-container {
+            position: relative;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 1rem;
+            padding: 1rem;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .total-result {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            animation: totalPulse 3s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .total-result span {
+            display: block;
+            white-space: nowrap;
+            width: auto;
+            max-width: none;
+        }
+        
+        @keyframes totalPulse {
+            0%, 100% { box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3); }
+            50% { box-shadow: 0 12px 35px rgba(245, 158, 11, 0.5); }
+        }
+        
+        .icon-rotate {
+            transition: transform 0.3s ease;
+        }
+        
+        .icon-rotate:hover {
+            transform: rotate(360deg);
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        <!-- Header -->
+        <div class="text-center mb-6 sm:mb-8 fade-in">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 sm:mb-3 header-glow">
+                <i class="fas fa-archive mr-2 sm:mr-3 icon-rotate"></i>
+                Архів: <span id="archive-title">Місяць/Рік</span>
+            </h1>
+            <p class="text-blue-200 text-sm sm:text-base md:text-lg">Детальна статистика за кожен день</p>
+            
+            <div class="mt-4 flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-3">
+                <button id="back-btn" class="btn-primary text-white font-bold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl text-base sm:text-lg relative overflow-hidden w-full sm:w-auto">
+                    <i class="fas fa-arrow-left mr-1.5 sm:mr-2"></i>
+                    Повернутись на головну
+                </button>
+                
+                <button id="export-csv-btn" class="btn-primary bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl text-base sm:text-lg relative overflow-hidden w-full sm:w-auto">
+                    <i class="fas fa-file-pdf mr-1.5 sm:mr-2"></i>
+                    Експорт у PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+            <!-- Summary Section -->
+            <div class="glass-effect rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 fade-in">
+                <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-4 sm:mb-6">
+                    <i class="fas fa-chart-pie mr-2 sm:mr-3 text-blue-400"></i>
+                    Загальна статистика
+                </h2>
+                
+                <div class="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+                    <div class="stat-card rounded-md sm:rounded-lg p-3 sm:p-4">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                            <span class="text-blue-200 font-medium text-sm sm:text-base mb-1 sm:mb-0">Період:</span>
+                            <span id="archive-period" class="text-white font-bold text-base sm:text-lg md:text-xl text-right">01.01.2023 - 31.01.2023</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card rounded-md sm:rounded-lg p-3 sm:p-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-blue-200 font-medium text-sm sm:text-base">Кількість днів:</span>
+                            <span id="archive-days-count" class="text-white font-bold text-lg sm:text-xl">31</span>
+                        </div>
+                    </div>
+                    
+                    <div class="total-result rounded-xl p-4 sm:p-5 md:p-6 relative overflow-hidden">
+                        <div class="flex flex-col sm:flex-row items-center justify-between relative z-10">
+                            <div class="flex items-center mb-2 sm:mb-0">
+                                <i class="fas fa-trophy text-white text-xl sm:text-2xl mr-2 sm:mr-3"></i>
+                                <span class="text-white font-bold text-base sm:text-lg md:text-2xl">Загальний результат:</span>
+                            </div>
+                            <span id="archive-total" class="text-white font-bold text-2xl sm:text-3xl">0.00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chart -->
+                <div class="chart-container mb-6 sm:mb-8 p-2 sm:p-3 md:p-4">
+                    <canvas id="archiveChart"></canvas>
+                </div>
+                
+                <!-- Summary By Category -->
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4 flex items-center">
+                        <i class="fas fa-list-alt mr-1.5 sm:mr-2 text-green-400"></i>
+                        За категоріями
+                    </h3>
+                    
+                    <div class="space-y-2 sm:space-y-3">
+                        <div class="stat-card rounded-md sm:rounded-lg p-3 sm:p-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-blue-200 font-medium text-sm sm:text-base">Зібрано у ДС:</span>
+                                <span id="summary-dc-collected" class="text-white font-bold text-base sm:text-lg md:text-xl">0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card rounded-md sm:rounded-lg p-3 sm:p-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-blue-200 font-medium text-sm sm:text-base">Зібрано у магазині:</span>
+                                <span id="summary-store-collected" class="text-white font-bold text-base sm:text-lg md:text-xl">0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card rounded-md sm:rounded-lg p-3 sm:p-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-blue-200 font-medium text-sm sm:text-base">Переміщено у ДС:</span>
+                                <span id="summary-dc-moved" class="text-white font-bold text-base sm:text-lg md:text-xl">0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card rounded-md sm:rounded-lg p-3 sm:p-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-blue-200 font-medium text-sm sm:text-base">Розміщено:</span>
+                                <span id="summary-placed" class="text-white font-bold text-base sm:text-lg md:text-xl">0</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Додаємо сумарний робочий час -->
+                        <div class="stat-card rounded-md sm:rounded-lg p-3 sm:p-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-blue-200 font-medium text-sm sm:text-base">Загальний робочий час:</span>
+                                <span id="summary-work-time" class="text-white font-bold text-base sm:text-lg md:text-xl">0 год 0 хв</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily Data Section -->
+            <div class="glass-effect rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 fade-in">
+                <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-4 sm:mb-6">
+                    <i class="fas fa-calendar-day mr-2 sm:mr-3 text-purple-400"></i>
+                    Щоденна статистика
+                </h2>
+                
+                <!-- Search and Sort -->
+                <div class="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
+                    <!-- Пошук за текстом -->
+                    <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                        <div class="flex-1">
+                            <input type="text" id="search-day" placeholder="Пошук за датою..." class="w-full rounded-md sm:rounded-lg px-3 py-2 sm:px-4 sm:py-3 bg-white bg-opacity-10 text-white border border-blue-500 focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 text-sm sm:text-base">
+                        </div>
+                        <div class="w-full sm:w-auto">
+                            <select id="sort-days" class="w-full rounded-md sm:rounded-lg px-3 py-2.5 sm:px-4 sm:py-3.5 text-white border border-purple-500 focus:border-purple-400 focus:ring focus:ring-purple-400 focus:ring-opacity-50 text-sm sm:text-base">
+                                <option value="date-desc">Дата (нові спочатку)</option>
+                                <option value="date-asc">Дата (старі спочатку)</option>
+                                <option value="total-desc">Результат (високий спочатку)</option>
+                                <option value="total-asc">Результат (низький спочатку)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Пошук за діапазоном дат -->
+                    <div class="glass-effect rounded-lg sm:rounded-xl p-3 sm:p-4">
+                        <h3 class="text-white font-medium sm:font-bold mb-2 sm:mb-3 flex items-center text-sm sm:text-base">
+                            <i class="fas fa-calendar-alt mr-1.5 sm:mr-2 text-blue-400"></i>
+                            Фільтр за діапазоном дат
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-2 sm:mb-3">
+                            <div>
+                                <label class="block text-blue-200 text-xs sm:text-sm font-medium mb-1 sm:mb-2">З дати:</label>
+                                <input type="date" id="date-from" class="w-full rounded-md sm:rounded-lg px-3 py-2 bg-white bg-opacity-10 text-white border border-blue-500 focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 text-sm sm:text-base">
+                            </div>
+                            <div>
+                                <label class="block text-blue-200 text-xs sm:text-sm font-medium mb-1 sm:mb-2">По дату:</label>
+                                <input type="date" id="date-to" class="w-full rounded-md sm:rounded-lg px-3 py-2 bg-white bg-opacity-10 text-white border border-blue-500 focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 text-sm sm:text-base">
+                            </div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                            <button id="apply-filter-btn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-md text-xs sm:text-sm transition duration-200">
+                                <i class="fas fa-filter mr-1 sm:mr-2"></i>
+                                Показати
+                            </button>
+                            <button id="reset-filter-btn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-md text-xs sm:text-sm transition duration-200">
+                                <i class="fas fa-sync mr-1 sm:mr-2"></i>
+                                Скинути
+                            </button>
+                            <button id="show-total-btn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-md text-xs sm:text-sm transition duration-200">
+                                <i class="fas fa-calculator mr-1 sm:mr-2"></i>
+                                Підсумок
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Days List -->
+                <div id="days-container" class="space-y-3 sm:space-y-4 overflow-y-auto max-h-[600px] sm:max-h-[700px] md:max-h-[800px] pr-1 sm:pr-2">
+                    <!-- День буде згенеровано через JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ArchiveDetail {
+            constructor() {
+                this.coefficients = {
+                    dcCollected: 1.49,
+                    storeCollected: 3.55,
+                    dcMoved: 4.26,
+                    placed: 1.78
+                };
+                
+                this.archiveData = null;
+                this.archiveMonth = '';
+                this.chart = null;
+                
+                this.initElements();
+                this.loadArchiveData();
+                this.bindEvents();
+            }
+            
+            initElements() {
+                // Заголовок і статистика
+                this.archiveTitle = document.getElementById('archive-title');
+                this.archivePeriod = document.getElementById('archive-period');
+                this.archiveDaysCount = document.getElementById('archive-days-count');
+                this.archiveTotal = document.getElementById('archive-total');
+                
+                // Загальні суми
+                this.summaryDcCollected = document.getElementById('summary-dc-collected');
+                this.summaryStoreCollected = document.getElementById('summary-store-collected');
+                this.summaryDcMoved = document.getElementById('summary-dc-moved');
+                this.summaryPlaced = document.getElementById('summary-placed');
+                
+                // Додаємо елемент для загального робочого часу
+                this.summaryWorkTime = document.getElementById('summary-work-time');
+                
+                // Пошук і сортування
+                this.searchInput = document.getElementById('search-day');
+                this.sortSelect = document.getElementById('sort-days');
+                
+                // Контейнер днів
+                this.daysContainer = document.getElementById('days-container');
+                
+                // Кнопка назад
+                this.backButton = document.getElementById('back-btn');
+            }
+            
+            bindEvents() {
+                // Повернення на головну
+                this.backButton.addEventListener('click', () => {
+                    window.location.href = 'index.html';
+                });
+                
+                // Експорт у PDF
+                document.getElementById('export-csv-btn').addEventListener('click', () => {
+                    this.exportToCSV();
+                });
+                
+                // Пошук днів за текстом
+                this.searchInput.addEventListener('input', () => {
+                    this.filterDays();
+                });
+                
+                // Сортування днів
+                this.sortSelect.addEventListener('change', () => {
+                    this.sortDays();
+                });
+                
+                // Фільтр за діапазоном дат
+                document.getElementById('apply-filter-btn').addEventListener('click', () => {
+                    this.filterByDateRange();
+                });
+                
+                // Скидання фільтра
+                document.getElementById('reset-filter-btn').addEventListener('click', () => {
+                    document.getElementById('date-from').value = '';
+                    document.getElementById('date-to').value = '';
+                    this.displayDailyData();
+                });
+                
+                // Показати підсумок за вибраний період
+                document.getElementById('show-total-btn').addEventListener('click', () => {
+                    this.showTotalForDateRange();
+                });
+            }
+            
+            loadArchiveData() {
+                // Отримуємо місяць з URL параметрів
+                const urlParams = new URLSearchParams(window.location.search);
+                this.archiveMonth = urlParams.get('month');
+                
+                // Отримуємо ключ архіву, якщо вказаний (для нового формату)
+                const archiveKey = urlParams.get('archive_key') || this.archiveMonth;
+                
+                if (!this.archiveMonth) {
+                    alert('Помилка: місяць не вказано');
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
+                // Завантажуємо дані архіву
+                const monthlyArchives = JSON.parse(localStorage.getItem('monthlyArchives') || '{}');
+                
+                // Спробуємо спочатку знайти архів за ключем (для нового формату)
+                if (monthlyArchives[archiveKey]) {
+                    this.archiveData = monthlyArchives[archiveKey];
+                } 
+                // Якщо не знайдено, шукаємо за місяцем (для старого формату)
+                else if (monthlyArchives[this.archiveMonth]) {
+                    this.archiveData = monthlyArchives[this.archiveMonth];
+                } else {
+                    alert('Помилка: архів не знайдено');
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
+                // Відображаємо загальну інформацію
+                this.displayArchiveSummary(archiveKey);
+                
+                // Відображаємо дані за кожен день
+                this.displayDailyData();
+                
+                // Оновлюємо графік
+                this.updateChart();
+            }
+            
+            displayArchiveSummary(archiveKey) {
+                // Визначаємо заголовок архіву на основі нових полів
+                if (this.archiveData.halfType && this.archiveData.monthName) {
+                    // Новий формат з інформацією про половину місяця
+                    this.archiveTitle.textContent = `${this.archiveData.halfType} ${this.archiveData.monthName}`;
+                } else {
+                    // Старий формат або сумісність
+                    const [year, month] = this.archiveMonth.split('-');
+                    const monthNames = ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'];
+                    this.archiveTitle.textContent = `${monthNames[parseInt(month) - 1]} ${year}`;
+                }
+                
+                // Період, кількість днів і загальний результат
+                this.archivePeriod.textContent = this.archiveData.period;
+                this.archiveDaysCount.textContent = this.archiveData.daysCount;
+                
+                // Форматуємо великі числа
+                if (Math.abs(this.archiveData.total) > 999999) {
+                    this.archiveTotal.textContent = this.archiveData.total.toExponential(2);
+                } else {
+                    this.archiveTotal.textContent = this.archiveData.total.toFixed(2);
+                }
+                
+                // Підрахунок загальних сум за категоріями
+                let totalDcCollected = 0;
+                let totalStoreCollected = 0;
+                let totalDcMoved = 0;
+                let totalPlaced = 0;
+                let totalWorkTimeMinutes = 0;
+                
+                Object.values(this.archiveData.data).forEach(day => {
+                    totalDcCollected += day.dcCollected || 0;
+                    totalStoreCollected += day.storeCollected || 0;
+                    totalDcMoved += day.dcMoved || 0;
+                    totalPlaced += day.placed || 0;
+                    totalWorkTimeMinutes += dayData.workTimeTotal || 0;
+                });
+                
+                this.summaryDcCollected.textContent = totalDcCollected;
+                this.summaryStoreCollected.textContent = totalStoreCollected;
+                this.summaryDcMoved.textContent = totalDcMoved;
+                this.summaryPlaced.textContent = totalPlaced;
+                
+                // Відображення загального робочого часу
+                const totalWorkTimeHours = Math.floor(totalWorkTimeMinutes / 60);
+                const totalWorkTimeRemainingMinutes = Math.floor(totalWorkTimeMinutes % 60);
+                document.getElementById('summary-work-time').textContent = 
+                    `${totalWorkTimeHours} год ${totalWorkTimeRemainingMinutes} хв`;
+            }
+            
+            displayDailyData() {
+                this.daysContainer.innerHTML = '';
+                
+                // Сортуємо дні за датою (спочатку нові)
+                const sortedDays = Object.entries(this.archiveData.data)
+                    .sort(([dateA], [dateB]) => new Date(dateB) - new Date(dateA));
+                
+                // Відображаємо кожен день
+                sortedDays.forEach(([date, dayData], index) => {
+                    const dayElement = this.createDayElement(date, dayData);
+                    dayElement.style.animationDelay = `${index * 0.05}s`;
+                    this.daysContainer.appendChild(dayElement);
+                });
+            }
+            
+            createDayElement(date, dayData) {
+                const dayCard = document.createElement('div');
+                dayCard.className = 'day-card stat-card rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5';
+                dayCard.dataset.date = date;
+                dayCard.dataset.total = dayData.total;
+                
+                // Форматуємо дату у вигляді DD.MM.YYYY
+                const formattedDate = new Date(date).toLocaleDateString('uk-UA', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+                
+                // Форматуємо великі числа для відображення
+                let formattedTotal = dayData.total;
+                if (Math.abs(dayData.total) > 999999) {
+                    formattedTotal = dayData.total.toExponential(2);
+                } else {
+                    formattedTotal = dayData.total.toFixed(2);
+                }
+                
+                // Перевіряємо чи є дані про робочий час
+                let workTimeHtml = '';
+                if (dayData.workTimeStart && dayData.workTimeEnd) {
+                    const hours = Math.floor((dayData.workTimeTotal || 0) / 60);
+                    const minutes = Math.floor((dayData.workTimeTotal || 0) % 60);
+                    
+                    workTimeHtml = `
+                        <div class="mt-2 sm:mt-3 bg-white bg-opacity-5 rounded-md sm:rounded-lg p-2 sm:p-3">
+                            <div class="text-blue-200 text-xs sm:text-sm">Робочий час:</div>
+                            <div class="flex flex-col xs:flex-row justify-between items-start xs:items-center mt-1">
+                                <span class="text-white text-xs sm:text-sm mb-0.5 xs:mb-0">${dayData.workTimeStart} - ${dayData.workTimeEnd}</span>
+                                <span class="text-blue-300 font-medium text-xs sm:text-sm">${hours} год ${minutes} хв</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                dayCard.innerHTML = `
+                    <div class="mb-3 sm:mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                        <div class="flex items-center mb-2 sm:mb-0">
+                            <div class="bg-blue-600 p-1.5 sm:p-2 rounded-full mr-2 sm:mr-3">
+                                <i class="fas fa-calendar-day text-white text-xs sm:text-base"></i>
+                            </div>
+                            <span class="text-white font-semibold sm:font-bold text-base sm:text-lg">${formattedDate}</span>
+                        </div>
+                        <span class="text-green-400 font-semibold sm:font-bold text-lg sm:text-xl number-truncate self-end sm:self-center" style="max-width: 100px; sm:max-width: 120px;">
+                            ${formattedTotal}
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3">
+                        <div class="bg-white bg-opacity-10 rounded-md sm:rounded-lg p-2 sm:p-3">
+                            <div class="text-blue-200 text-xs sm:text-sm">Зібрано у ДС</div>
+                            <div class="flex justify-between items-center mt-0.5 sm:mt-1">
+                                <span class="text-white font-medium text-sm sm:text-base">${dayData.dcCollected || 0}</span>
+                                <span class="text-blue-300 text-xs sm:text-sm">× 1.49</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white bg-opacity-10 rounded-md sm:rounded-lg p-2 sm:p-3">
+                            <div class="text-blue-200 text-xs sm:text-sm">Зібрано у магазині</div>
+                            <div class="flex justify-between items-center mt-0.5 sm:mt-1">
+                                <span class="text-white font-medium text-sm sm:text-base">${dayData.storeCollected || 0}</span>
+                                <span class="text-blue-300 text-xs sm:text-sm">× 3.55</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white bg-opacity-10 rounded-md sm:rounded-lg p-2 sm:p-3">
+                            <div class="text-blue-200 text-xs sm:text-sm">Переміщено у ДС</div>
+                            <div class="flex justify-between items-center mt-0.5 sm:mt-1">
+                                <span class="text-white font-medium text-sm sm:text-base">${dayData.dcMoved || 0}</span>
+                                <span class="text-blue-300 text-xs sm:text-sm">× 4.26</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white bg-opacity-10 rounded-md sm:rounded-lg p-2 sm:p-3">
+                            <div class="text-blue-200 text-xs sm:text-sm">Розміщено</div>
+                            <div class="flex justify-between items-center mt-0.5 sm:mt-1">
+                                <span class="text-white font-medium text-sm sm:text-base">${dayData.placed || 0}</span>
+                                <span class="text-blue-300 text-xs sm:text-sm">× 1.78</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${workTimeHtml}
+                `;
+                
+                return dayCard;
+            }
+            
+            filterDays() {
+                const searchText = this.searchInput.value.toLowerCase();
+                const dayCards = this.daysContainer.querySelectorAll('.day-card');
+                
+                dayCards.forEach(card => {
+                    const date = card.dataset.date;
+                    const formattedDate = new Date(date).toLocaleDateString('uk-UA');
+                    
+                    if (formattedDate.toLowerCase().includes(searchText) || date.includes(searchText)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+            
+            sortDays() {
+                const sortValue = this.sortSelect.value;
+                const dayCards = Array.from(this.daysContainer.querySelectorAll('.day-card'));
+                
+                // Сортуємо картки
+                dayCards.sort((a, b) => {
+                    const dateA = new Date(a.dataset.date);
+                    const dateB = new Date(b.dataset.date);
+                    const totalA = parseFloat(a.dataset.total);
+                    const totalB = parseFloat(b.dataset.total);
+                    
+                    switch (sortValue) {
+                        case 'date-desc':
+                            return dateB - dateA;
+                        case 'date-asc':
+                            return dateA - dateB;
+                        case 'total-desc':
+                            return totalB - totalA;
+                        case 'total-asc':
+                            return totalA - totalB;
+                        default:
+                            return 0;
+                    }
+                });
+                
+                // Перерендерим картки у новому порядку
+                dayCards.forEach((card, index) => {
+                    card.style.animationDelay = `${index * 0.05}s`;
+                    this.daysContainer.appendChild(card);
+                });
+            }
+            
+            updateChart() {
+                const ctx = document.getElementById('archiveChart').getContext('2d');
+                
+                // Сортуємо дні за датою (хронологічно)
+                const sortedDays = Object.entries(this.archiveData.data)
+                    .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB));
+                
+                const labels = sortedDays.map(([date]) => {
+                    // Формат дати: DD.MM
+                    const d = new Date(date);
+                    return `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+                });
+                
+                const data = sortedDays.map(([, dayData]) => dayData.total);
+                
+                if (this.chart) {
+                    this.chart.destroy();
+                }
+                
+                this.chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Щоденний результат',
+                            data: data,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#10b981',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            pointRadius: 5,
+                            pointHoverRadius: 7
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeInOutQuart'
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#ffffff',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    color: '#ffffff',
+                                    font: {
+                                        weight: 'bold'
+                                    },
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    color: '#ffffff',
+                                    font: {
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Видаляємо стару функцію exportToCSV і створюємо нову для PDF
+            exportToCSV() {
+                if (!this.archiveData || !this.archiveData.data) {
+                    alert('Немає даних для експорту');
+                    return;
+                }
+                
+                // Використовуємо jsPDF
+                const { jsPDF } = window.jspdf;
+                
+                // Створюємо документ з підтримкою кирилиці
+                const doc = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                
+                // Додаємо підтримку кирилиці
+                doc.addFont('https://cdn.jsdelivr.net/npm/roboto-font@0.1.0/fonts/Roboto/roboto-regular-webfont.ttf', 'Roboto', 'normal');
+                doc.setFont('Roboto');
+                
+                // Форматуємо ім'я файлу
+                const [year, month] = this.archiveMonth.split('-');
+                const monthNames = ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'];
+                const monthName = monthNames[parseInt(month) - 1];
+                
+                // Визначаємо заголовок для експорту
+                let titleText = '';
+                
+                if (this.archiveData.halfType && this.archiveData.monthName) {
+                    // Новий формат
+                    titleText = `Статистика роботи за ${this.archiveData.halfType} ${this.archiveData.monthName}`;
+                } else {
+                    // Старий формат
+                    titleText = `Статистика роботи за ${monthName} ${year}`;
+                }
+                
+                // Додаємо заголовок
+                doc.setFontSize(14);
+                doc.setTextColor(44, 62, 80);
+                doc.text(titleText, 140, 20, { align: 'center' });
+                
+                // Додаємо інформацію про період
+                doc.setFontSize(10);
+                doc.setTextColor(52, 73, 94);
+                doc.text(`Період: ${this.archiveData.period}`, 140, 28, { align: 'center' });
+                doc.text(`Кількість днів: ${this.archiveData.daysCount}`, 140, 33, { align: 'center' });
+                
+                // Підготовка даних для таблиці
+                const tableColumn = [
+                    { header: 'Дата', dataKey: 'date' },
+                    { header: 'Зібрано ДС', dataKey: 'dcCollected' },
+                    { header: 'Рез. ДС', dataKey: 'dcResult' },
+                    { header: 'Зібрано маг.', dataKey: 'storeCollected' },
+                    { header: 'Рез. маг.', dataKey: 'storeResult' },
+                    { header: 'Переміщено', dataKey: 'dcMoved' },
+                    { header: 'Рез. перем.', dataKey: 'movedResult' },
+                    { header: 'Розміщено', dataKey: 'placed' },
+                    { header: 'Рез. розм.', dataKey: 'placedResult' },
+                    { header: 'Загальний', dataKey: 'total' },
+                    { header: 'Робочий час', dataKey: 'workTime' }
+                ];
+                
+                // Сортуємо дні за датою
+                const sortedDays = Object.entries(this.archiveData.data)
+                    .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB));
+                
+                // Формуємо рядки для таблиці
+                const tableRows = [];
+                let totalDcCollected = 0;
+                let totalStoreCollected = 0;
+                let totalDcMoved = 0;
+                let totalPlaced = 0;
+                let totalWorkTimeMinutes = 0;
+                
+                sortedDays.forEach(([date, dayData]) => {
+                    // Форматуємо дату
+                    const formattedDate = new Date(date).toLocaleDateString('uk-UA');
+                    
+                    // Обчислюємо результати для кожної категорії
+                    const dcResult = (dayData.dcCollected || 0) * this.coefficients.dcCollected;
+                    const storeResult = (dayData.storeCollected || 0) * this.coefficients.storeCollected;
+                    const movedResult = (dayData.dcMoved || 0) * this.coefficients.dcMoved;
+                    const placedResult = (dayData.placed || 0) * this.coefficients.placed;
+                    
+                    // Підраховуємо загальні суми
+                    totalDcCollected += dayData.dcCollected || 0;
+                    totalStoreCollected += dayData.storeCollected || 0;
+                    totalDcMoved += dayData.dcMoved || 0;
+                    totalPlaced += dayData.placed || 0;
+                    totalWorkTimeMinutes += dayData.workTimeTotal || 0;
+                    
+                    // Форматуємо робочий час
+                    let workTimeFormatted = '';
+                    if (dayData.workTimeTotal) {
+                        const hours = Math.floor(dayData.workTimeTotal / 60);
+                        const minutes = Math.floor(dayData.workTimeTotal % 60);
+                        workTimeFormatted = `${hours} год ${minutes} хв`;
+                    }
+                    
+                    // Додаємо рядок
+                    tableRows.push({
+                        date: formattedDate,
+                        dcCollected: dayData.dcCollected || 0,
+                        dcResult: dcResult.toFixed(2),
+                        storeCollected: dayData.storeCollected || 0,
+                        storeResult: storeResult.toFixed(2),
+                        dcMoved: dayData.dcMoved || 0,
+                        movedResult: movedResult.toFixed(2),
+                        placed: dayData.placed || 0,
+                        placedResult: placedResult.toFixed(2),
+                        total: dayData.total.toFixed(2),
+                        workTime: workTimeFormatted
+                    });
+                });
+                
+                // Розраховуємо підсумкові результати
+                const totalDcResult = totalDcCollected * this.coefficients.dcCollected;
+                const totalStoreResult = totalStoreCollected * this.coefficients.storeCollected;
+                const totalMovedResult = totalDcMoved * this.coefficients.dcMoved;
+                const totalPlacedResult = totalPlaced * this.coefficients.placed;
+                
+                // Форматуємо загальний робочий час
+                const totalWorkTimeHours = Math.floor(totalWorkTimeMinutes / 60);
+                const totalWorkTimeRemainingMinutes = Math.floor(totalWorkTimeMinutes % 60);
+                const workTimeFormatted = `${totalWorkTimeHours} год ${totalWorkTimeRemainingMinutes} хв`;
+                
+                // Додаємо підсумковий рядок
+                const footerRow = {
+                    date: 'ЗАГАЛОМ',
+                    dcCollected: totalDcCollected,
+                    dcResult: totalDcResult.toFixed(2),
+                    storeCollected: totalStoreCollected,
+                    storeResult: totalStoreResult.toFixed(2),
+                    dcMoved: totalDcMoved,
+                    movedResult: totalMovedResult.toFixed(2),
+                    placed: totalPlaced,
+                    placedResult: totalPlacedResult.toFixed(2),
+                    total: this.archiveData.total.toFixed(2),
+                    workTime: workTimeFormatted
+                };
+                
+                // Створюємо таблицю з правильними налаштуваннями для кирилиці
+                doc.autoTable({
+                    startY: 40,
+                    head: [tableColumn.map(col => col.header)],
+                    body: tableRows.map(row => tableColumn.map(col => row[col.dataKey])),
+                    foot: [[
+                        footerRow.date,
+                        footerRow.dcCollected,
+                        footerRow.dcResult,
+                        footerRow.storeCollected,
+                        footerRow.storeResult,
+                        footerRow.dcMoved,
+                        footerRow.movedResult,
+                        footerRow.placed,
+                        footerRow.placedResult,
+                        footerRow.total,
+                        footerRow.workTime
+                    ]],
+                    theme: 'grid',
+                    tableWidth: 'auto',
+                    styles: {
+                        font: 'Roboto',
+                        fontSize: 8,
+                        cellPadding: 2,
+                        lineColor: [44, 62, 80],
+                        lineWidth: 0.1,
+                        overflow: 'linebreak'
+                    },
+                    headStyles: {
+                        fillColor: [41, 128, 185],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        halign: 'center'
+                    },
+                    alternateRowStyles: {
+                        fillColor: [241, 245, 249]
+                    },
+                    footStyles: {
+                        fillColor: [52, 152, 219],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        halign: 'center'
+                    }
+                });
+                
+                // Зберігаємо PDF з відповідним іменем файлу
+                const fileName = this.archiveData.halfType 
+                    ? `Статистика_${this.archiveData.halfType}_${this.archiveData.monthName}.pdf`
+                    : `Статистика_${monthName}_${year}.pdf`;
+                
+                doc.save(fileName);
+                
+                // Показуємо повідомлення про успішне завантаження
+                this.showSuccessMessage('PDF файл успішно експортовано!');
+            }
+            
+            // Метод для показу повідомлення про успіх
+            showSuccessMessage(message) {
+                const successMessage = document.createElement('div');
+                successMessage.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                successMessage.innerHTML = `<i class="fas fa-check mr-2"></i>${message}`;
+                successMessage.style.animation = 'slideInRight 0.3s ease-out';
+                
+                document.body.appendChild(successMessage);
+                
+                setTimeout(() => {
+                    successMessage.style.animation = 'slideOutRight 0.3s ease-out';
+                    setTimeout(() => successMessage.remove(), 300);
+                }, 3000);
+            }
+            
+            // Метод фільтрації за діапазоном дат
+            filterByDateRange() {
+                const dateFrom = document.getElementById('date-from').value;
+                const dateTo = document.getElementById('date-to').value;
+                
+                if (!dateFrom && !dateTo) {
+                    this.showWarningMessage('Виберіть хоча б одну дату для фільтрації');
+                    return;
+                }
+                
+                // Отримуємо всі картки днів
+                const dayCards = Array.from(this.daysContainer.querySelectorAll('.day-card'));
+                
+                // Фільтруємо за датами
+                dayCards.forEach(card => {
+                    const cardDate = card.dataset.date;
+                    
+                    let showCard = true;
+                    
+                    if (dateFrom && cardDate < dateFrom) {
+                        showCard = false;
+                    }
+                    
+                    if (dateTo && cardDate > dateTo) {
+                        showCard = false;
+                    }
+                    
+                    card.style.display = showCard ? 'block' : 'none';
+                });
+                
+                // Показуємо повідомлення про застосований фільтр
+                const visibleCards = dayCards.filter(card => card.style.display !== 'none');
+                
+                if (visibleCards.length === 0) {
+                    this.showWarningMessage('Немає даних за вибраний період');
+                } else {
+                    this.showSuccessMessage(`Знайдено ${visibleCards.length} записів`);
+                }
+            }
+            
+            // Метод для показу підсумків за вибраний період
+            showTotalForDateRange() {
+                const dateFrom = document.getElementById('date-from').value;
+                const dateTo = document.getElementById('date-to').value;
+                
+                if (!dateFrom && !dateTo) {
+                    this.showWarningMessage('Виберіть хоча б одну дату для розрахунку');
+                    return;
+                }
+                
+                // Фільтруємо дані за датами
+                const filteredData = Object.entries(this.archiveData.data).filter(([date, _]) => {
+                    let isInRange = true;
+                    
+                    if (dateFrom && date < dateFrom) {
+                        isInRange = false;
+                    }
+                    
+                    if (dateTo && date > dateTo) {
+                        isInRange = false;
+                    }
+                    
+                    return isInRange;
+                });
+                
+                if (filteredData.length === 0) {
+                    this.showWarningMessage('Немає даних за вибраний період');
+                    return;
+                }
+                
+                // Розраховуємо підсумки
+                let totalDcCollected = 0;
+                let totalStoreCollected = 0;
+                let totalDcMoved = 0;
+                let totalPlaced = 0;
+                let totalResult = 0;
+                let totalWorkTimeMinutes = 0;
+                
+                filteredData.forEach(([_, dayData]) => {
+                    totalDcCollected += dayData.dcCollected || 0;
+                    totalStoreCollected += dayData.storeCollected || 0;
+                    totalDcMoved += dayData.dcMoved || 0;
+                    totalPlaced += dayData.placed || 0;
+                    totalResult += dayData.total || 0;
+                    totalWorkTimeMinutes += dayData.workTimeTotal || 0;
+                });
+                
+                // Розрахунок загального робочого часу
+                const totalWorkTimeHours = Math.floor(totalWorkTimeMinutes / 60);
+                const totalWorkTimeRemainingMinutes = Math.floor(totalWorkTimeMinutes % 60);
+                const workTimeFormatted = `${totalWorkTimeHours} год ${totalWorkTimeRemainingMinutes} хв`;
+                
+                // Додаємо інформацію про робочий час у модальне вікно
+                const workTimeHtml = totalWorkTimeMinutes > 0 ? `
+                    <div class="stat-card rounded-lg p-4 mt-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-blue-200 font-medium">Загальний робочий час:</span>
+                            <span class="text-white font-bold">${workTimeFormatted}</span>
+                        </div>
+                    </div>
+                ` : '';
+                
+                // Створюємо модальне вікно для показу підсумків
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="glass-effect rounded-2xl p-8 w-full max-w-md fade-in">
+                        <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                            <i class="fas fa-calculator mr-3 text-green-400"></i>
+                            Підсумок за період
+                        </h3>
+                        
+                        <div class="space-y-4 mb-6">
+                            <div class="stat-card rounded-lg p-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-blue-200 font-medium">Період:</span>
+                                    <span class="text-white font-bold">${dateFrom ? new Date(dateFrom).toLocaleDateString('uk-UA') : 'початок'} - ${dateTo ? new Date(dateTo).toLocaleDateString('uk-UA') : 'кінець'}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card rounded-lg p-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-blue-200 font-medium">Кількість днів:</span>
+                                    <span class="text-white font-bold">${filteredData.length}</span>
+                                </div>
+                            </div>
+                            
+                            ${workTimeHtml}
+                            
+                            <div class="total-result rounded-xl p-5">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-white font-bold">Загальний результат:</span>
+                                    <span class="text-white font-bold text-2xl">${totalResult.toFixed(2)}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3 mt-4">
+                                <div class="bg-white bg-opacity-10 rounded-lg p-3">
+                                    <div class="text-blue-200 text-sm">Зібрано у ДС</div>
+                                    <div class="flex justify-between items-center mt-1">
+                                        <span class="text-white font-medium">${totalDcCollected}</span>
+                                        <span class="text-blue-300 text-sm">× 1.49</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white bg-opacity-10 rounded-lg p-3">
+                                    <div class="text-blue-200 text-sm">Зібрано у магазині</div>
+                                    <div class="flex justify-between items-center mt-1">
+                                        <span class="text-white font-medium">${totalStoreCollected}</span>
+                                        <span class="text-blue-300 text-sm">× 3.55</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white bg-opacity-10 rounded-lg p-3">
+                                    <div class="text-blue-200 text-sm">Переміщено у ДС</div>
+                                    <div class="flex justify-between items-center mt-1">
+                                        <span class="text-white font-medium">${totalDcMoved}</span>
+                                        <span class="text-blue-300 text-sm">× 4.26</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white bg-opacity-10 rounded-lg p-3">
+                                    <div class="text-blue-200 text-sm">Розміщено</div>
+                                    <div class="flex justify-between items-center mt-1">
+                                        <span class="text-white font-medium">${totalPlaced}</span>
+                                        <span class="text-blue-300 text-sm">× 1.78</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button id="close-modal-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200">
+                                Закрити
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Додаємо обробник для закриття модального вікна
+                document.getElementById('close-modal-btn').addEventListener('click', () => {
+                    modal.classList.add('fade-out');
+                    setTimeout(() => {
+                        document.body.removeChild(modal);
+                    }, 300);
+                });
+            }
+            
+            // Метод для показу попередження
+            showWarningMessage(message) {
+                const warningMessage = document.createElement('div');
+                warningMessage.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                warningMessage.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>${message}`;
+                warningMessage.style.animation = 'slideInRight 0.3s ease-out';
+                
+                document.body.appendChild(warningMessage);
+                
+                setTimeout(() => {
+                    warningMessage.style.animation = 'slideOutRight 0.3s ease-out';
+                    setTimeout(() => warningMessage.remove(), 300);
+                }, 3000);
+            }
+            
+            // Додаємо метод для валідації полів часу у випадку, якщо в майбутньому додамо поля редагування часу
+            validateTimeInput(input) {
+                if (!input.value) return;
+                
+                const timeParts = input.value.split(':');
+                if (timeParts.length !== 2) return;
+                
+                let hours = parseInt(timeParts[0]);
+                let minutes = parseInt(timeParts[1]);
+                
+                // Обмежуємо години до 23
+                if (hours > 23) hours = 23;
+                
+                // Обмежуємо хвилини до 59
+                if (minutes > 59) minutes = 59;
+                
+                // Форматуємо значення з ведучими нулями
+                const formattedHours = hours.toString().padStart(2, '0');
+                const formattedMinutes = minutes.toString().padStart(2, '0');
+                
+                // Встановлюємо валідоване значення
+                input.value = `${formattedHours}:${formattedMinutes}`;
+            }
+        }
+        
+        // Ініціалізуємо сторінку при завантаженні
+        document.addEventListener('DOMContentLoaded', () => {
+            new ArchiveDetail();
+        });
+    </script>
+</body>
+</html> 
