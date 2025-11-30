@@ -10,27 +10,35 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         
+        :root {
+            --blue-900: #0b122b;
+            --blue-700: #1d4ed8;
+            --blue-500: #3b82f6;
+            --indigo-500: #6366f1;
+            --card-border: rgba(255, 255, 255, 0.15);
+            --glass: rgba(255, 255, 255, 0.08);
+        }
+
         * {
             font-family: 'Inter', sans-serif;
         }
-        
+
         body {
-            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 25%, #1e40af 50%, #1e3a8a 75%, #1e1b4b 100%);
-            background-size: 400% 400%;
-            animation: gradientShift 15s ease infinite;
+            background: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.35), transparent 25%),
+                        radial-gradient(circle at 90% 10%, rgba(59, 130, 246, 0.35), transparent 22%),
+                        radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.25), transparent 20%),
+                        linear-gradient(135deg, #0f172a 0%, #0b122b 45%, #0f172a 100%);
+            background-attachment: fixed;
+            color: #e5e7eb;
             min-height: 100vh;
-        }
-        
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            position: relative;
+            overflow-x: hidden;
         }
         
         .glass-effect {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: var(--glass);
+            backdrop-filter: blur(18px);
+            border: 1px solid var(--card-border);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             transition: all 0.3s ease;
         }
@@ -138,10 +146,85 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
         }
+
+        .background-grid {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 32px 32px;
+            opacity: 0.6;
+            z-index: 0;
+        }
+
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+        }
+
+        .nav-chip {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--card-border);
+            padding: 0.5rem 0.85rem;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #e0e7ff;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+        }
+
+        .nav-link {
+            color: #e5e7eb;
+            font-weight: 600;
+            padding: 0.5rem 0.9rem;
+            border-radius: 0.75rem;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--card-border);
+            transform: translateY(-1px);
+        }
+
+        .nav-link--primary {
+            background: linear-gradient(135deg, var(--blue-500), var(--indigo-500));
+            color: white;
+            border: none;
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.35);
+        }
     </style>
 </head>
 <body class="min-h-screen">
-    <div class="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+    <div class="background-grid"></div>
+    <div class="container mx-auto px-2 sm:px-4 py-4 sm:py-8 relative z-10">
+        <div class="glass-effect nav-bar mb-4 sm:mb-6">
+            <div class="flex items-center gap-3">
+                <div class="nav-chip">
+                    <span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 shadow-lg">
+                        <i class="fas fa-archive"></i>
+                    </span>
+                    <div>
+                        <p class="text-xs text-blue-100">Історія місяців</p>
+                        <p class="text-sm font-semibold">Повний архів</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 sm:gap-3">
+                <a href="index.html" class="nav-link">Головна</a>
+                <a href="archive-detail.html" class="nav-link">Деталі архіву</a>
+                <a href="#archives-container" class="nav-link nav-link--primary">Переглянути записи</a>
+            </div>
+        </div>
+
         <!-- Header -->
         <div class="text-center mb-6 sm:mb-8 fade-in">
             <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 sm:mb-3 header-glow">
