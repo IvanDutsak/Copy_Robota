@@ -1,0 +1,9 @@
+/* Styles for Silpo Data Extractor content script */
+
+#silpo-extractor-btn {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+#silpo-notification {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}

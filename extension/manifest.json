@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Silpo Assemblers Data Extractor",
+  "version": "1.0.0",
+  "description": "Витягує дані збиральників з back-office.silpo.ua",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://back-office.silpo.ua/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://back-office.silpo.ua/dams/assemblers-key-indicators*"],
+      "js": ["content.js"],
+      "css": ["content.css"]
+    }
+  ]
+}

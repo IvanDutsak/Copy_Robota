@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silpo Data Extractor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            width: 350px;
+            min-height: 200px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .status {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .status-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .status-label {
+            font-size: 13px;
+        }
+        
+        .status-value {
+            font-size: 13px;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 3px 10px;
+            border-radius: 5px;
+        }
+        
+        .status-value.success {
+            background: #4CAF50;
+        }
+        
+        .status-value.warning {
+            background: #ff9800;
+        }
+        
+        .status-value.error {
+            background: #f44336;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+        
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #45a049;
+        }
+        
+        .btn-primary:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .message {
+            text-align: center;
+            font-size: 12px;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .message.success {
+            background: rgba(76, 175, 80, 0.3);
+        }
+        
+        .message.error {
+            background: rgba(244, 67, 54, 0.3);
+        }
+        
+        .message.info {
+            background: rgba(33, 150, 243, 0.3);
+        }
+        
+        .data-preview {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 15px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 11px;
+        }
+        
+        .data-preview h3 {
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+        
+        .assembler-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .instructions {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 15px;
+            line-height: 1.5;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Silpo Data Extractor</h1>
+        <p>Витягування даних збиральників</p>
+    </div>
+    
+    <div class="status">
+        <div class="status-item">
+            <span class="status-label">Сторінка:</span>
+            <span class="status-value" id="page-status">Перевірка...</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Дата:</span>
+            <span class="status-value" id="date-status">-</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Збережено даних:</span>
+            <span class="status-value" id="saved-count">0</span>
+        </div>
+    </div>
+    
+    <button class="btn btn-primary" id="extract-btn" disabled>
+        📥 Витягнути дані
+    </button>
+    
+    <button class="btn btn-secondary" id="copy-btn">
+        📋 Копіювати дані
+    </button>
+    
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Витягування даних...</p>
+    </div>
+    
+    <div class="message" id="message" style="display: none;"></div>
+    
+    <div class="data-preview" id="data-preview" style="display: none;">
+        <h3>Збережені дані:</h3>
+        <div id="assemblers-list"></div>
+    </div>
+    
+    <div class="instructions">
+        <strong>Інструкція:</strong><br>
+        1. Відкрийте back-office.silpo.ua<br>
+        2. Перейдіть до "Ключові показники збиральників"<br>
+        3. Виберіть потрібну дату<br>
+        4. Натисніть "Витягнути дані"<br>
+        5. Дані будуть доступні на вашому сайті
+    </div>
+    
+    <script src="popup.js"></script>
+</body>
+</html>

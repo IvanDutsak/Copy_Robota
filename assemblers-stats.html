@@ -4,362 +4,628 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Показники збиральників</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        
         * {
-            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
         body {
-            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 25%, #1e40af 50%, #1e3a8a 75%, #1e1b4b 100%);
-            background-size: 400% 400%;
-            animation: gradientShift 15s ease infinite;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             min-height: 100vh;
+            padding: 20px;
+            color: white;
         }
         
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
         }
         
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
         }
         
-        .glass-effect:hover {
-            background: rgba(255, 255, 255, 0.12);
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
         }
         
-        .input-glow {
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+        
+        .card {
             background: rgba(255, 255, 255, 0.1);
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
         }
         
-        .input-glow:focus {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.2);
-            transform: scale(1.02);
+        .card-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .date-section {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .date-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.4);
         }
         
-        .stat-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
+        .btn-primary:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
         }
         
-        .stat-card:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        .btn-secondary {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(33, 150, 243, 0.4);
+        }
+        
+        .btn-back {
+            background: transparent;
+            border: 2px solid white;
+            color: white;
+        }
+        
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .status-message {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .status-message.loading {
+            background: rgba(33, 150, 243, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-message.success {
+            background: rgba(76, 175, 80, 0.3);
+            display: block;
+        }
+        
+        .status-message.error {
+            background: rgba(244, 67, 54, 0.3);
+            display: block;
+        }
+        
+        .status-message.info {
+            background: rgba(255, 152, 0, 0.3);
+            display: block;
+        }
+        
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .assemblers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
         }
         
         .assembler-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
             cursor: pointer;
             transition: all 0.3s ease;
+            border: 2px solid transparent;
         }
         
         .assembler-card:hover {
-            background: rgba(59, 130, 246, 0.2);
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.3);
         }
         
         .assembler-card.selected {
-            background: rgba(59, 130, 246, 0.4);
-            border: 2px solid #3b82f6;
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.2);
         }
         
-        .header-glow {
-            text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-            animation: headerPulse 3s ease-in-out infinite;
+        .assembler-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 10px;
         }
         
-        @keyframes headerPulse {
-            0%, 100% { text-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
-            50% { text-shadow: 0 0 30px rgba(59, 130, 246, 0.8), 0 0 40px rgba(139, 92, 246, 0.3); }
+        .assembler-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 0.9rem;
         }
         
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
+        .stat-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px;
+            border-radius: 8px;
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .stat-label {
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+        
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .details-section {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .details-section.visible {
+            display: block;
+        }
+        
+        .details-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .detail-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .detail-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .detail-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .detail-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .total-card {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .instructions {
+            background: rgba(255, 152, 0, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .instructions ol {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+        
+        .instructions a {
+            color: #90CAF9;
+        }
+        
+        .data-info {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .data-info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            opacity: 0.7;
+        }
+        
+        .no-data-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
-    <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-4xl md:text-5xl font-bold text-white header-glow mb-4">
-                <i class="fas fa-users mr-3"></i>
-                Показники збиральників
-            </h1>
-            <p class="text-blue-200 text-lg">Виберіть дату та збиральника для перегляду детальної статистики</p>
+    <div class="container">
+        <div class="header">
+            <h1>👥 Показники збиральників</h1>
+            <p>Перегляд статистики збиральників з back-office.silpo.ua</p>
         </div>
-
-        <!-- Date Selection -->
-        <div class="glass-effect rounded-2xl p-6 mb-8 fade-in">
-            <h2 class="text-2xl font-bold text-white mb-4">
-                <i class="fas fa-calendar mr-2 text-blue-400"></i>
-                Виберіть дату
-            </h2>
-            <input type="date" id="date-selector" class="input-glow text-white rounded-lg px-4 py-3 w-full text-lg">
+        
+        <div class="card">
+            <div class="card-title">📅 Виберіть дату</div>
+            <div class="date-section">
+                <input type="date" id="date-selector" class="date-input">
+                <button class="btn btn-primary" id="load-data-btn">
+                    📥 Завантажити дані
+                </button>
+            </div>
+            
+            <div class="status-message" id="status-message">
+                <div class="spinner"></div>
+                <span id="status-text">Завантаження...</span>
+            </div>
+            
+            <div class="data-info" id="data-info" style="display: none;">
+                <div class="data-info-item">
+                    <span>📅</span>
+                    <span>Дата: <strong id="loaded-date">-</strong></span>
+                </div>
+                <div class="data-info-item">
+                    <span>👥</span>
+                    <span>Збиральників: <strong id="loaded-count">0</strong></span>
+                </div>
+                <div class="data-info-item">
+                    <span>🕐</span>
+                    <span>Оновлено: <strong id="loaded-time">-</strong></span>
+                </div>
+            </div>
         </div>
-
-        <!-- Assembler Selection -->
-        <div id="assembler-selection" class="glass-effect rounded-2xl p-6 mb-8 fade-in" style="display: none;">
-            <h2 class="text-2xl font-bold text-white mb-4">
-                <i class="fas fa-user-check mr-2 text-green-400"></i>
-                Хто Ви?
-            </h2>
-            <div id="assemblers-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        
+        <div class="card" id="assemblers-section" style="display: none;">
+            <div class="card-title">👤 Хто Ви?</div>
+            <div class="assemblers-grid" id="assemblers-grid">
                 <!-- Assemblers will be loaded here -->
             </div>
         </div>
-
-        <!-- Stats Display -->
-        <div id="stats-display" class="glass-effect rounded-2xl p-6 fade-in" style="display: none;">
-            <h2 class="text-2xl font-bold text-white mb-6">
-                <i class="fas fa-chart-bar mr-2 text-yellow-400"></i>
-                Ваші показники
-            </h2>
-            <div id="stats-content" class="space-y-4">
-                <!-- Stats will be loaded here -->
+        
+        <div class="card details-section" id="details-section">
+            <div class="details-header">
+                <div class="card-title">📊 Ваші показники</div>
+                <button class="btn btn-secondary" id="back-to-list">
+                    ← Назад до списку
+                </button>
+            </div>
+            
+            <h2 id="selected-name" style="margin-bottom: 20px; font-size: 1.5rem;"></h2>
+            
+            <div class="details-grid" id="details-grid">
+                <!-- Details will be loaded here -->
             </div>
         </div>
-
-        <!-- Back Button -->
-        <div class="mt-8 text-center">
-            <a href="index.html" class="btn-primary text-white font-bold py-3 px-6 rounded-xl text-lg inline-block">
-                <i class="fas fa-arrow-left mr-2"></i>
-                Повернутися назад
-            </a>
+        
+        <div class="instructions" id="instructions">
+            <h3>📋 Як користуватися</h3>
+            <ol>
+                <li>Встановіть розширення <strong>"Silpo Data Extractor"</strong> для Chrome</li>
+                <li>Відкрийте <a href="https://back-office.silpo.ua/dams/assemblers-key-indicators" target="_blank">back-office.silpo.ua</a> та увійдіть в систему</li>
+                <li>Перейдіть до "Ключові показники збиральників"</li>
+                <li>Виберіть потрібну дату</li>
+                <li>Натисніть зелену кнопку "📊 Витягнути дані" на сторінці</li>
+                <li>Поверніться сюди та натисніть "Завантажити дані"</li>
+            </ol>
         </div>
+        
+        <a href="index.html" class="back-link">← Повернутися назад</a>
     </div>
 
     <script>
-        // Sample data from the screenshot
-        const assemblersData = {
-            '2025-12-19': [
-                {
-                    name: 'Зубата Сніжана Ярославівна',
-                    dcCollected: 40,
-                    storeCollected: 55,
-                    packed: 54,
-                    dcMoved: 13
-                },
-                {
-                    name: 'Кочкодан Людмила Володимирівна',
-                    dcCollected: 87,
-                    storeCollected: 91,
-                    packed: 155,
-                    dcMoved: 0
-                },
-                {
-                    name: 'Марченко Світлана Володимирівна',
-                    dcCollected: 34,
-                    storeCollected: 47,
-                    packed: 75,
-                    dcMoved: 0
-                },
-                {
-                    name: 'Мозговий Єгор Миколайович',
-                    dcCollected: 15,
-                    storeCollected: 18,
-                    packed: 19,
-                    dcMoved: 0
-                },
-                {
-                    name: 'Пилип\'як Денис Володимирович',
-                    dcCollected: 50,
-                    storeCollected: 72,
-                    packed: 122,
-                    dcMoved: 0
-                },
-                {
-                    name: 'Савчук Микола Сергійович',
-                    dcCollected: 15,
-                    storeCollected: 11,
-                    packed: 13,
-                    dcMoved: 0
-                },
-                {
-                    name: 'Шімон Оксана Володимирівна',
-                    dcCollected: 30,
-                    storeCollected: 45,
-                    packed: 0,
-                    dcMoved: 0
-                }
-            ]
-        };
-
+        // Set default date to today
         const dateSelector = document.getElementById('date-selector');
-        const assemblerSelection = document.getElementById('assembler-selection');
-        const assemblersList = document.getElementById('assemblers-list');
-        const statsDisplay = document.getElementById('stats-display');
-        const statsContent = document.getElementById('stats-content');
-
-        let selectedDate = null;
-        let selectedAssembler = null;
-
-        // Set today's date as default
         const today = new Date().toISOString().split('T')[0];
         dateSelector.value = today;
-
-        dateSelector.addEventListener('change', function() {
-            selectedDate = this.value;
-            loadAssemblers();
+        
+        let assemblersData = [];
+        let selectedAssembler = null;
+        
+        // Load data button click
+        document.getElementById('load-data-btn').addEventListener('click', loadData);
+        
+        // Back to list button
+        document.getElementById('back-to-list').addEventListener('click', () => {
+            document.getElementById('details-section').classList.remove('visible');
+            document.getElementById('assemblers-section').style.display = 'block';
         });
-
-        function loadAssemblers() {
-            const assemblers = assemblersData[selectedDate];
+        
+        async function loadData() {
+            const statusMessage = document.getElementById('status-message');
+            const statusText = document.getElementById('status-text');
+            const loadBtn = document.getElementById('load-data-btn');
             
-            if (!assemblers || assemblers.length === 0) {
-                assemblersList.innerHTML = '<div class="text-white text-center col-span-full">Немає даних для обраної дати</div>';
-                assemblerSelection.style.display = 'block';
-                statsDisplay.style.display = 'none';
+            loadBtn.disabled = true;
+            statusMessage.className = 'status-message loading';
+            statusText.textContent = 'Завантаження даних...';
+            
+            try {
+                // Try to get data from Chrome extension storage
+                if (typeof chrome !== 'undefined' && chrome.storage) {
+                    chrome.storage.local.get(['silpoData', 'lastUpdate'], (result) => {
+                        if (result.silpoData && result.silpoData.assemblers) {
+                            displayData(result.silpoData, result.lastUpdate);
+                        } else {
+                            showNoData();
+                        }
+                        loadBtn.disabled = false;
+                    });
+                } else {
+                    // Fallback: try to load from localStorage
+                    const storedData = localStorage.getItem('silpoData');
+                    if (storedData) {
+                        const data = JSON.parse(storedData);
+                        displayData(data, localStorage.getItem('lastUpdate'));
+                    } else {
+                        showNoData();
+                    }
+                    loadBtn.disabled = false;
+                }
+            } catch (e) {
+                console.error('Error loading data:', e);
+                statusMessage.className = 'status-message error';
+                statusText.textContent = 'Помилка завантаження: ' + e.message;
+                loadBtn.disabled = false;
+            }
+        }
+        
+        function showNoData() {
+            const statusMessage = document.getElementById('status-message');
+            const statusText = document.getElementById('status-text');
+            
+            statusMessage.className = 'status-message info';
+            statusText.textContent = '⚠️ Дані не знайдено. Використайте розширення для витягування даних з back-office.';
+            
+            document.getElementById('assemblers-section').style.display = 'none';
+            document.getElementById('data-info').style.display = 'none';
+        }
+        
+        function displayData(data, lastUpdate) {
+            const statusMessage = document.getElementById('status-message');
+            const statusText = document.getElementById('status-text');
+            const selectedDate = dateSelector.value;
+            
+            assemblersData = data.assemblers || [];
+            
+            // Filter by selected date if needed
+            // For now, show all data
+            
+            if (assemblersData.length === 0) {
+                showNoData();
                 return;
             }
-
-            assemblersList.innerHTML = '';
-            assemblers.forEach((assembler, index) => {
+            
+            statusMessage.className = 'status-message success';
+            statusText.textContent = `✅ Завантажено ${assemblersData.length} записів`;
+            
+            // Show data info
+            document.getElementById('data-info').style.display = 'flex';
+            document.getElementById('loaded-date').textContent = data.date || selectedDate;
+            document.getElementById('loaded-count').textContent = assemblersData.length;
+            document.getElementById('loaded-time').textContent = lastUpdate ? 
+                new Date(lastUpdate).toLocaleString('uk-UA') : '-';
+            
+            // Display assemblers
+            displayAssemblers();
+        }
+        
+        function displayAssemblers() {
+            const grid = document.getElementById('assemblers-grid');
+            grid.innerHTML = '';
+            
+            if (assemblersData.length === 0) {
+                grid.innerHTML = `
+                    <div class="no-data">
+                        <div class="no-data-icon">📭</div>
+                        <p>Немає даних для обраної дати</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            document.getElementById('assemblers-section').style.display = 'block';
+            
+            assemblersData.forEach((assembler, index) => {
+                const total = (assembler.dcCollected || 0) + (assembler.storeCollected || 0);
+                
                 const card = document.createElement('div');
-                card.className = 'assembler-card stat-card rounded-lg p-4';
+                card.className = 'assembler-card';
                 card.innerHTML = `
-                    <div class="flex items-center">
-                        <div class="bg-blue-500 p-3 rounded-full mr-3">
-                            <i class="fas fa-user text-white text-xl"></i>
+                    <div class="assembler-name">${assembler.name}</div>
+                    <div class="assembler-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Зібрано у ДС</div>
+                            <div class="stat-value">${assembler.dcCollected || 0}</div>
                         </div>
-                        <div>
-                            <div class="text-white font-semibold">${assembler.name}</div>
-                            <div class="text-blue-200 text-sm">Натисніть для перегляду</div>
+                        <div class="stat-item">
+                            <div class="stat-label">В магазині</div>
+                            <div class="stat-value">${assembler.storeCollected || 0}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Спаковано</div>
+                            <div class="stat-value">${assembler.packed || 0}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Всього</div>
+                            <div class="stat-value" style="color: #4CAF50;">${total}</div>
                         </div>
                     </div>
                 `;
                 
-                card.addEventListener('click', function() {
-                    document.querySelectorAll('.assembler-card').forEach(c => c.classList.remove('selected'));
-                    card.classList.add('selected');
-                    selectedAssembler = assembler;
-                    showStats();
-                });
-                
-                assemblersList.appendChild(card);
+                card.addEventListener('click', () => selectAssembler(index));
+                grid.appendChild(card);
             });
-
-            assemblerSelection.style.display = 'block';
         }
-
-        function showStats() {
+        
+        function selectAssembler(index) {
+            selectedAssembler = assemblersData[index];
+            
+            // Update card selection
+            document.querySelectorAll('.assembler-card').forEach((card, i) => {
+                card.classList.toggle('selected', i === index);
+            });
+            
+            // Show details
+            showDetails();
+        }
+        
+        function showDetails() {
             if (!selectedAssembler) return;
-
-            statsContent.innerHTML = `
-                <div class="stat-card rounded-lg p-5">
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center">
-                            <div class="bg-purple-500 p-3 rounded-full mr-3">
-                                <i class="fas fa-user-circle text-white text-2xl"></i>
-                            </div>
-                            <span class="text-white font-bold text-xl">${selectedAssembler.name}</span>
-                        </div>
-                        <span class="text-blue-200">${selectedDate}</span>
-                    </div>
+            
+            document.getElementById('assemblers-section').style.display = 'none';
+            document.getElementById('details-section').classList.add('visible');
+            document.getElementById('selected-name').textContent = selectedAssembler.name;
+            
+            const total = (selectedAssembler.dcCollected || 0) + 
+                         (selectedAssembler.storeCollected || 0) + 
+                         (selectedAssembler.packed || 0);
+            
+            const detailsGrid = document.getElementById('details-grid');
+            detailsGrid.innerHTML = `
+                <div class="detail-card">
+                    <div class="detail-icon">🏭</div>
+                    <div class="detail-value">${selectedAssembler.dcCollected || 0}</div>
+                    <div class="detail-label">Зібрано у ДС</div>
                 </div>
-
-                <div class="stat-card rounded-lg p-5">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center">
-                            <div class="bg-blue-500 p-3 rounded-full mr-3">
-                                <i class="fas fa-box text-white text-xl"></i>
-                            </div>
-                            <span class="text-white font-semibold text-lg">Зібрано у ДС</span>
-                        </div>
-                        <span class="text-white font-bold text-2xl">${selectedAssembler.dcCollected}</span>
-                    </div>
+                <div class="detail-card">
+                    <div class="detail-icon">🏪</div>
+                    <div class="detail-value">${selectedAssembler.storeCollected || 0}</div>
+                    <div class="detail-label">Зібрано в магазині</div>
                 </div>
-
-                <div class="stat-card rounded-lg p-5">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center">
-                            <div class="bg-green-500 p-3 rounded-full mr-3">
-                                <i class="fas fa-store text-white text-xl"></i>
-                            </div>
-                            <span class="text-white font-semibold text-lg">Зібрано в магазині</span>
-                        </div>
-                        <span class="text-white font-bold text-2xl">${selectedAssembler.storeCollected}</span>
-                    </div>
+                <div class="detail-card">
+                    <div class="detail-icon">📦</div>
+                    <div class="detail-value">${selectedAssembler.packed || 0}</div>
+                    <div class="detail-label">Спаковано</div>
                 </div>
-
-                <div class="stat-card rounded-lg p-5">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center">
-                            <div class="bg-yellow-500 p-3 rounded-full mr-3">
-                                <i class="fas fa-gift text-white text-xl"></i>
-                            </div>
-                            <span class="text-white font-semibold text-lg">Спаковано</span>
-                        </div>
-                        <span class="text-white font-bold text-2xl">${selectedAssembler.packed}</span>
-                    </div>
+                <div class="detail-card">
+                    <div class="detail-icon">🚚</div>
+                    <div class="detail-value">${selectedAssembler.dcMoved || 0}</div>
+                    <div class="detail-label">Переміщено у ДС</div>
                 </div>
-
-                <div class="stat-card rounded-lg p-5">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center">
-                            <div class="bg-red-500 p-3 rounded-full mr-3">
-                                <i class="fas fa-truck text-white text-xl"></i>
-                            </div>
-                            <span class="text-white font-semibold text-lg">Переміщено у ДС</span>
-                        </div>
-                        <span class="text-white font-bold text-2xl">${selectedAssembler.dcMoved}</span>
-                    </div>
+                <div class="detail-card">
+                    <div class="detail-icon">🏬</div>
+                    <div class="detail-value">${selectedAssembler.storeMoved || 0}</div>
+                    <div class="detail-label">Переміщено в магазин</div>
                 </div>
-
-                <div class="stat-card rounded-lg p-5 bg-gradient-to-r from-blue-600 to-purple-600">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center">
-                            <div class="bg-white bg-opacity-20 p-3 rounded-full mr-3">
-                                <i class="fas fa-trophy text-white text-xl"></i>
-                            </div>
-                            <span class="text-white font-bold text-lg">Загальна кількість артикулів</span>
-                        </div>
-                        <span class="text-white font-bold text-3xl">${selectedAssembler.dcCollected + selectedAssembler.storeCollected + selectedAssembler.packed + selectedAssembler.dcMoved}</span>
-                    </div>
+                <div class="detail-card">
+                    <div class="detail-icon">📋</div>
+                    <div class="detail-value">${selectedAssembler.placedQty || 0}</div>
+                    <div class="detail-label">Розміщено (шт)</div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-icon">⚖️</div>
+                    <div class="detail-value">${selectedAssembler.placedKg || 0}</div>
+                    <div class="detail-label">Розміщено (кг)</div>
+                </div>
+                <div class="detail-card total-card">
+                    <div class="detail-icon">🏆</div>
+                    <div class="detail-value">${total}</div>
+                    <div class="detail-label">Загальна кількість</div>
                 </div>
             `;
-
-            statsDisplay.style.display = 'block';
-            statsDisplay.scrollIntoView({ behavior: 'smooth' });
         }
-
-        // Load assemblers for today on page load
-        if (assemblersData[today]) {
-            selectedDate = today;
-            loadAssemblers();
-        }
+        
+        // Try to load data on page load
+        setTimeout(loadData, 500);
     </script>
 </body>
 </html>
